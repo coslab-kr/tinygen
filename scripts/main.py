@@ -43,9 +43,9 @@ def main():
     tinygen_dir = os.path.join(OUTPUT_DIR, tinygen_model_name)
     os.makedirs(tinygen_dir, exist_ok=True)
 
-    ops_src = os.path.join(OUTPUT_DIR, "model_ops_list.txt")
+    tmp_ops = "model_ops_list.txt"
     dst_ops = os.path.join(tinygen_dir, "model_ops_list.txt")
-    shutil.move(ops_src, dst_ops)
+    shutil.move(tmp_ops, dst_ops)
 
     kernels_optimization_cmd = [
         sys.executable, 

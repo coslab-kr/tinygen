@@ -3214,7 +3214,7 @@ namespace {
             mainFunc.setAllArgAttrs(mlir::ArrayAttr::get(context, {}));
         }
         
-        std::ofstream fout2("gen/model_ops_list.txt");
+        std::ofstream fout2("model_ops_list.txt");
         for (const auto &kv : convParamMap) {
             fout2 << kv.first << " "; 
             for (auto v : kv.second) { 

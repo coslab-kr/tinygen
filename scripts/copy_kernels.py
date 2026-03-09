@@ -3,7 +3,7 @@ import shutil
 import glob
 import argparse
 
-OP_LIST = "gen/model_ops_list.txt"
+OP_LIST = "model_ops_list.txt"
 
 ALWAYS_FILES = [
     "kernels/kernels.h",

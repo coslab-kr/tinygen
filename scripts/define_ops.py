@@ -1,6 +1,6 @@
 import os
 
-OP_LIST = "gen/model_ops_list.txt"
+OP_LIST = "model_ops_list.txt"
 OUTPUT_HEADER = "kernels/kernels.h"
 
 def op_to_define(op_name: str) -> str:
