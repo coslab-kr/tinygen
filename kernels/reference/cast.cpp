@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+
 #ifdef CAST
 void cast(Tensor* input, Tensor* output, int quant_check) {
     int total_size = 1;
@@ -29,9 +32,5 @@ void cast(Tensor* input, Tensor* output, int quant_check) {
 
     }
 
-    else {
-        std::cerr << "[ERROR] Unsupported cast type: quant_check="
-                  << quant_check << "\n";
-    }
 }
 #endif

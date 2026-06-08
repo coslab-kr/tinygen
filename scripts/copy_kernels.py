@@ -15,7 +15,7 @@ ALWAYS_GLOBS = [
     "kernels/cmsis-nn/*.cpp",
     "kernels/cmsis-nn/*.h",
     "kernels/cmsis-nn/include/*.h",
-    "kernels/reference/*.c",
+    "kernels/reference/*.cpp",
     "kernels/reference/*.h",
 ]
 

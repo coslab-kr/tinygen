@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+
 #ifdef REDUCE_MAX
 void reduce_max(Tensor* input, Tensor* output, int axis) {
     
@@ -8,7 +11,7 @@ void reduce_max(Tensor* input, Tensor* output, int axis) {
 
     int out_size = 1;
     for (int i = 0; i < output->rank; ++i) out_size *= output->shape[i];
-    fill(out_f, out_f + out_size, -FLT_MAX);
+    std::fill(out_f, out_f + out_size, -FLT_MAX);
 
     // ---- Case 1: 2D Tensor (N,H)
     if (rank == 2) {

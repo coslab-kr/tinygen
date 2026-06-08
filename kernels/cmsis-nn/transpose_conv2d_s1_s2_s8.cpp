@@ -30,7 +30,7 @@ void  transpose_conv2d_s1_s2_s8(Tensor* input, Tensor* weight, Tensor* bias,
 
     cmsis_nn_per_channel_quant_params quant_params;
     quant_params.multiplier = rescale_multiplier;
-    quant_params.shift      = shift.data();
+    quant_params.shift      = shift;
 
     cmsis_nn_dims input_dims{input->shape[0], input->shape[1], input->shape[2], input->shape[3]};
     cmsis_nn_dims filter_dims{weight->shape[0], weight->shape[1], weight->shape[2], weight->shape[3]};
@@ -60,7 +60,6 @@ void  transpose_conv2d_s1_s2_s8(Tensor* input, Tensor* weight, Tensor* bias,
     size_t reverse_filter_size = filter_h * filter_w * input_c * output_c;
     int8_t* reversed_filter = (int8_t*)malloc(reverse_filter_size);
     if (!reversed_filter) {
-        std::cerr << "[ERROR] malloc failed for reversed_filter\n";
         if (buffer) free(buffer);
         return;
     }

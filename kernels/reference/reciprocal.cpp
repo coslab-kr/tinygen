@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+
 #ifdef RECIPROCAL
 void reciprocal(Tensor* input, Tensor* output) {
 

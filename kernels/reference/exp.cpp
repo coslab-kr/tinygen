@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+
 #ifdef EXP
 void tensor_exp(Tensor* input, Tensor* output) {
 

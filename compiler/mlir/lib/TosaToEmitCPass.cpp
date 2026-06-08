@@ -595,7 +595,7 @@ namespace {
         
         auto padAttr = max_poolOp.getPad();   
         auto strideAttr = max_poolOp.getStride(); 
-
+        auto kernelAttr = max_poolOp.getKernel();
         auto newCall = rewriter.create<emitc::CallOpaqueOp>(
             max_poolOp.getLoc(), 
             TypeRange{}, 
@@ -610,8 +610,8 @@ namespace {
             padAttr[2],  
             strideAttr[0],
             strideAttr[1],
-            rewriter.getI64IntegerAttr(1).getInt(), 
-            rewriter.getI64IntegerAttr(1).getInt() 
+            kernelAttr[0],
+            kernelAttr[1]
         };
 
         auto key = callee.str();
@@ -683,6 +683,7 @@ namespace {
 
         auto padAttr = avg_poolOp.getPad();      
         auto strideAttr = avg_poolOp.getStride();
+        auto kernelAttr = avg_poolOp.getKernel();
 
         auto newCall = rewriter.create<emitc::CallOpaqueOp>(
             avg_poolOp.getLoc(), 
@@ -698,8 +699,8 @@ namespace {
             padAttr[2],     
             strideAttr[0], 
             strideAttr[1],
-            rewriter.getI64IntegerAttr(1).getInt(), 
-            rewriter.getI64IntegerAttr(1).getInt() 
+            kernelAttr[0],
+            kernelAttr[1]
         };
 
         auto key = callee.str();
@@ -913,34 +914,28 @@ namespace {
             auto outElemType = outTensor.getElementType();
 
             if (inElemType.isInteger(8) && outElemType.isF32()) {
-                llvm::errs() << "[DEBUG] Cast direction: int8 → float32\n";
                 quant_check = 0;
             }
             else if (auto quantType = mlir::dyn_cast<mlir::quant::UniformQuantizedType>(inElemType)) {
                 if (quantType.getStorageTypeIntegralWidth() == 8 && outElemType.isF32()) {
-                    llvm::errs() << "[DEBUG] Cast direction: quantized int8 → float32 (dequant)\n";
                     quant_check = 0;
                 }
             }
             else if (inElemType.isF32() && outElemType.isInteger(8)) {
-                llvm::errs() << "[DEBUG] Cast direction: float32 → int8\n";
                 quant_check = 1;
             }
             else if (inElemType.isF32()) {
                 if (auto quantType = mlir::dyn_cast<mlir::quant::UniformQuantizedType>(outElemType)) {
                     if (quantType.getStorageTypeIntegralWidth() == 8) {
-                        llvm::errs() << "[DEBUG] Cast direction: float32 → quantized int8 (quant)\n";
                         quant_check = 1;
                     }
                 }
             }
             else {
-                llvm::errs() << "[DEBUG] Cast direction: other type conversion\n";
                 quant_check = -1;
             }
 
         } else {
-            llvm::errs() << "[DEBUG] Non-tensor cast type, skipping\n";
             quant_check = -1;
         }
 
@@ -1277,8 +1272,6 @@ namespace {
         Type resultType = addOp.getResult().getType();
         StringAttr callee = rewriter.getStringAttr("add_float");
         
-        llvm::errs() << "[DEBUG] Selected callee: " << callee.getValue() << "\n";
-
         std::string varName = "t" + std::to_string(id++);
         
         auto opaqueTensorType = emitc::OpaqueType::get(rewriter.getContext(), "Tensor");
@@ -1897,7 +1890,7 @@ namespace {
 
     //sub
     LogicalResult convertSubToEmitC(tosa::SubOp subOp, PatternRewriter &rewriter) {
-        StringAttr callee = rewriter.getStringAttr("subi_float");
+        StringAttr callee = rewriter.getStringAttr("sub_float");
         std::string varName = "t" + std::to_string(id++);
         
         auto opaqueTensorType = emitc::OpaqueType::get(rewriter.getContext(), "Tensor");

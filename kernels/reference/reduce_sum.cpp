@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+
 #ifdef REDUCE_SUM
 void reduce_sum(Tensor* input, Tensor* output, int axis) {
 
@@ -10,7 +13,7 @@ void reduce_sum(Tensor* input, Tensor* output, int axis) {
 
     float* in_f = reinterpret_cast<float*>(input->location);
     float* out_f = reinterpret_cast<float*>(output->location);
-    fill(out_f, out_f + (out_shape[0]*out_shape[1]*out_shape[2]*out_shape[3]), 0.0f);
+    std::fill(out_f, out_f + (out_shape[0]*out_shape[1]*out_shape[2]*out_shape[3]), 0.0f);
 
     int stride = 1;
     for (int i = axis + 1; i < output->rank; ++i) stride *= in_shape[i];

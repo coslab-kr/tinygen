@@ -238,8 +238,6 @@ void MemoryPlanner::performMemoryOptimizer() {
             if (alloc.size < expandSize)
                 pool.freeIntervals.push_back({oldSize + alloc.size, pool.size});
 
-            llvm::outs() << "  [Expand] Arena expanded by " << (expandSize / 1024.0)
-                         << " KB for tensor (" << (alloc.size / 1024.0) << " KB)\n";
         }
 
         for (auto& prevAlloc : allocations) {

@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+
 #ifdef MAXIMUM
 static inline int32_t requantize(int32_t value, int32_t multiplier, int32_t shift)
 {

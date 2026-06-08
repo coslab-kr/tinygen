@@ -4,7 +4,13 @@ from pathlib import Path
 import argparse
 
 GEN_DIR = Path("gen")
-PARAM_KEYS = ["pad_y", "pad_x", "stride_y", "stride_x", "dilation_y", "dilation_x"]
+#PARAM_KEYS = ["pad_y", "pad_x", "stride_y", "stride_x", "dilation_y", "dilation_x"]
+PARAM_KEYS = {
+    "avg_pool_2d": ["pad_y", "pad_x", "stride_y", "stride_x", "kernel_y", "kernel_x"],
+    "max_pool_2d": ["pad_y", "pad_x", "stride_y", "stride_x", "kernel_y", "kernel_x"],
+    "conv2d_f3x3_s8": ["pad_y", "pad_x", "stride_y", "stride_x", "dilation_y", "dilation_x"],
+    "depthwise_conv2d_f3x3_s8": ["pad_y", "pad_x", "stride_y", "stride_x", "dilation_y", "dilation_x"],
+}
 
 OP_TO_EXISTING_FILE = {
     "avg_pool_2d": "arm_avgpool_s8.c",
@@ -31,13 +37,17 @@ def patch_consts_inplace(filepath: Path, params: dict) -> int:
         filepath.write_text(code, encoding="utf-8")
     return total
 
-def build_params(nums):
+def build_params(op, nums):
     values = list(map(int, nums))
-    k = min(len(values), len(PARAM_KEYS))
+    keys = PARAM_KEYS[op]
+
+    k = min(len(values), len(keys))
     params = {}
+
     for i in range(k):
         if values[i] != -1:
-            params[PARAM_KEYS[i]] = values[i]
+            params[keys[i]] = values[i]
+
     return params
 
 def process_one_tinygen_dir(tinygen_dir: Path) -> None:
@@ -58,7 +68,7 @@ def process_one_tinygen_dir(tinygen_dir: Path) -> None:
         if not nums:
             continue
 
-        params = build_params(nums)
+        params = build_params(op, nums)
         if not params:
             continue
 

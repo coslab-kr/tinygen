@@ -1,3 +1,6 @@
+#include "kernels.h"
+#include "reference.h"
+#include <vector>
 #ifdef ADD_FLOAT
 void add_float(Tensor* input1, Tensor* input2, Tensor* output){
 
@@ -14,13 +17,13 @@ void add_float(Tensor* input1, Tensor* input2, Tensor* output){
 
     float* in1_f = reinterpret_cast<float*>(input1->location);
     float* in2_f = reinterpret_cast<float*>(input2->location);
-    vector<float> bc_v(block_size);
+    std::vector<float> bc_v(block_size);
     std::vector<float> out_q(block_size);
 
     if(input1_size>input2_size){
         check = true;
         if(input2_size ==1){
-            fill(bc_v.begin(), bc_v.end(), in2_f[0]);
+            std::fill(bc_v.begin(), bc_v.end(), in2_f[0]);
         }else{
             for (int i = 0; i < block_size; ++i) {
                 bc_v[i] = static_cast<float>(roundf(in2_f[i]));
@@ -29,7 +32,7 @@ void add_float(Tensor* input1, Tensor* input2, Tensor* output){
     }else{
         check = false;
         if(input1_size ==1){
-            fill(bc_v.begin(), bc_v.end(), in1_f[0]);
+            std::fill(bc_v.begin(), bc_v.end(), in1_f[0]);
         }else{
             for (int i = 0; i < block_size; ++i) {
                 bc_v[i] = static_cast<float>(roundf(in1_f[i]));

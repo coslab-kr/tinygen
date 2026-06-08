@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include "tensor.h"
+#include <vector>
+#include <algorithm>
+#include <cmath>
 #ifdef __cplusplus
 extern "C" {
 #endif
