@@ -20,8 +20,7 @@ python -m pip install . -Ccmake.define.LLVM_DIR=/path/to/llvm/lib/cmake/llvm
 
 The package includes `tinyc`, `mlir-translate`, and kernel sources.
 
-<details>
-<summary>Build configuration</summary>
+### Build configuration
 
 - Use `pip install -e .` for development, with the same CMake settings.
 - To use existing executables, install with `-Ccmake.define.TINYGEN_BUILD_COMPILER=OFF`.
@@ -32,7 +31,32 @@ The package includes `tinyc`, `mlir-translate`, and kernel sources.
   `CMAKE_EXE_LINKER_FLAGS=-fuse-ld=/path/to/ld64.lld` through pip's
   `-Ccmake.define.<NAME>=<VALUE>` options.
 
-</details>
+## TFLite to TOSA MLIR
+
+Convert `.tflite` models separately with Arm's
+[TOSA Converter for TFLite](https://gitlab.arm.com/tosa/tosa-converter-for-tflite).
+On Linux or Windows with a supported Python version:
+
+```bash
+python -m pip install tosa-converter-for-tflite
+tosa-converter-for-tflite --version
+tosa-converter-for-tflite model.tflite --text -o model.mlir
+```
+
+Use `--text` to produce textual TOSA MLIR. On macOS, run this conversion in a
+Linux environment or container, then copy `model.mlir` back to the host.
+See the [converter documentation](https://pypi.org/project/tosa-converter-for-tflite/)
+for supported platforms and Python versions.
+
+Before compiling, check that the generated IR is compatible with **LLVM/MLIR 20.1.x**
+and meets the [model requirements](#model-support), including a `main` entry point.
+Successful TOSA conversion does not guarantee that TinyGen supports every generated
+operator or quantization pattern. This converter-to-TinyGen workflow has not yet
+been validated end to end.
+
+```bash
+tinygen model.mlir -o gen
+```
 
 ## Usage
 
@@ -89,8 +113,7 @@ Run Python and host-kernel tests:
 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
-<details>
-<summary>Build and test the native compiler</summary>
+### Build and test the native compiler
 
 Use the same LLVM and compiler settings as for installation.
 
@@ -108,10 +131,7 @@ Native integration tests check generated C++ execution on the host. They are ski
 when the two `TINYGEN_TEST_*` variables are unset. Cortex-M execution and performance
 require separate target testing.
 
-</details>
-
-<details>
-<summary>Update CMSIS-NN</summary>
+### Update CMSIS-NN
 
 Keep TinyGen adapters in `kernels/cmsis-nn/` separate from the
 [upstream sources](https://github.com/ARM-software/CMSIS-NN).
@@ -128,8 +148,6 @@ git add third_party/CMSIS-NN
 Replace `vX.Y.Z` with the selected release. Package installation uses the pinned
 commit; it does not automatically fetch newer versions.
 
-</details>
-
 ## Citation
 
 Gaeun Ko and Seonyeong Heo. **TinyGen: Portable and Compact Code Generation for
@@ -137,25 +155,19 @@ Tiny Machine Learning.** In *Proceedings of the 35th ACM SIGPLAN International
 Conference on Compiler Construction (CC ’26)*, pp. 131–142, 2026.
 [DOI: 10.1145/3771775.3786278](https://doi.org/10.1145/3771775.3786278)
 
-<details>
-<summary>BibTeX</summary>
+### BibTeX
 
 ```bibtex
 @inproceedings{10.1145/3771775.3786278,
-author = {Ko, Gaeun and Heo, Seonyeong},
-title = {TinyGen: Portable and Compact Code Generation for Tiny Machine Learning},
-year = {2026},
-isbn = {9798400722745},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-url = {https://doi.org/10.1145/3771775.3786278},
-doi = {10.1145/3771775.3786278},
-booktitle = {Proceedings of the 35th ACM SIGPLAN International Conference on Compiler Construction},
-pages = {131–142},
-numpages = {12},
-location = {Sydney, NSW, Australia},
-series = {CC '26}
+  author = {Ko, Gaeun and Heo, Seonyeong},
+  title = {TinyGen: Portable and Compact Code Generation for Tiny Machine Learning},
+  year = {2026},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  doi = {10.1145/3771775.3786278},
+  booktitle = {Proceedings of the 35th ACM SIGPLAN International Conference on Compiler Construction},
+  pages = {131–142},
+  location = {Sydney, NSW, Australia},
+  series = {CC '26}
 }
 ```
-
-</details>
