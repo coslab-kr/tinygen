@@ -79,7 +79,7 @@ void conv2d_fnxn_s8(Tensor* input, Tensor* weight, Tensor* bias,
         }
         ctx.size = (uint32_t)(buf_size + 15);
 
-        arm_convolve_s8_fixed(
+        arm_convolve_s8(
             &ctx,
             &conv_params,
             &quant_params,

@@ -1,106 +1,49 @@
-cmake_minimum_required(VERSION 3.15)
-set(LLVM_VERSION "20.1.2")
-set(LLVM_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/llvm")
-
-include("${CMAKE_CURRENT_LIST_DIR}/InstallLLVM.cmake") 
-
-set(CMAKE_C_COMPILER "${CLANG_BIN}" CACHE PATH "C compiler" FORCE)
-set(CMAKE_CXX_COMPILER "${CLANGXX_BIN}" CACHE PATH "C++ compiler" FORCE)
-
-set(CMAKE_EXE_LINKER_FLAGS "-fuse-ld=lld" CACHE STRING "" FORCE)
-set(CMAKE_SHARED_LINKER_FLAGS "-fuse-ld=lld" CACHE STRING "" FORCE)
-
-project(tinyc LANGUAGES C CXX)
-
-include("${CMAKE_CURRENT_LIST_DIR}/SetLLVMEnvironment.cmake")
-
-set(LLVM_INCLUDE_DIR ${LLVM_INSTALL_DIR}/${LLVM_TARGET_NAME}/include)
-set(LLVM_LIB_DIR     ${LLVM_INSTALL_DIR}/${LLVM_TARGET_NAME}/lib)
-
-include_directories(${LLVM_INCLUDE_DIR} mlir/include)
-link_directories(${LLVM_LIB_DIR})
+# Use one installed LLVM/MLIR toolchain for headers, libraries and translation.
+# Pass -DLLVM_DIR=/path/to/lib/cmake/llvm if it is not on CMake's search path.
+find_package(LLVM 20.1 CONFIG REQUIRED)
+if(NOT LLVM_VERSION_MAJOR EQUAL 20)
+  message(FATAL_ERROR "tinyc requires LLVM/MLIR 20.1.x; found ${LLVM_PACKAGE_VERSION}")
+endif()
+find_package(MLIR CONFIG REQUIRED HINTS "${LLVM_DIR}/../mlir")
 
 add_library(tinyc-mlir STATIC
   mlir/lib/TosaToEmitCPass.cpp
+  mlir/lib/TosaToEmitC/Operators.cpp
+  mlir/lib/TosaToEmitC/TensorEmitter.cpp
   mlir/lib/MemoryPlanner/LivenessAnalysis.cpp
   mlir/lib/MemoryPlanner/MemoryPlanner.cpp
   mlir/lib/MemoryPlanner/TensorGraph.cpp
   mlir/lib/MemoryPlanner/TensorNode.cpp
 )
+target_compile_features(tinyc-mlir PUBLIC cxx_std_17)
+target_include_directories(tinyc-mlir SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
+target_include_directories(tinyc-mlir PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/mlir/include")
+separate_arguments(TINYGEN_LLVM_DEFINITIONS NATIVE_COMMAND "${LLVM_DEFINITIONS}")
+target_compile_options(tinyc-mlir PUBLIC ${TINYGEN_LLVM_DEFINITIONS})
+if(NOT LLVM_ENABLE_RTTI)
+  if(MSVC)
+    target_compile_options(tinyc-mlir PUBLIC /GR-)
+  else()
+    target_compile_options(tinyc-mlir PUBLIC -fno-rtti)
+  endif()
+endif()
 
-target_compile_options(tinyc-mlir PRIVATE -stdlib=libc++)
-
+target_link_libraries(tinyc-mlir PUBLIC
+  MLIRParser MLIRPass MLIRTransforms MLIRTosaDialect MLIRQuantDialect
+  MLIRQuantUtils MLIRTensorDialect MLIRTensorUtils MLIRArithDialect
+  MLIRFuncDialect MLIRMemRefDialect MLIREmitCDialect
+)
 add_executable(tinyc main.cpp)
+target_link_libraries(tinyc PRIVATE tinyc-mlir)
+set_target_properties(tinyc PROPERTIES INSTALL_RPATH "${LLVM_LIBRARY_DIRS}")
+install(TARGETS tinyc RUNTIME DESTINATION tinygen/bin)
 
-target_compile_options(tinyc PRIVATE -stdlib=libc++)
-target_link_options(tinyc PRIVATE 
-    -stdlib=libc++ 
-    -fuse-ld=lld
-    -static-libstdc++ 
-    -static-libgcc
-    -Wl,--allow-shlib-undefined
-)
+find_program(TINYGEN_MLIR_TRANSLATE NAMES mlir-translate
+  PATHS "${LLVM_TOOLS_BINARY_DIR}" NO_DEFAULT_PATH REQUIRED)
+install(PROGRAMS "${TINYGEN_MLIR_TRANSLATE}" DESTINATION tinygen/bin)
 
-set_target_properties(tinyc PROPERTIES
-  BUILD_RPATH "${LLVM_LIB_DIR}/x86_64-unknown-linux-gnu"
-  INSTALL_RPATH "${LLVM_LIB_DIR}/x86_64-unknown-linux-gnu"
-)
-
-target_link_libraries(tinyc
-  PRIVATE
-    tinyc-mlir
-    c++
-    c++abi
-    unwind
-    pthread
-    dl
-    MLIRLoopLikeInterface 
-    MLIRFunctionInterfaces
-    MLIRTransformUtils
-    MLIRRewrite
-    MLIRRewritePDL
-    MLIRPDLToPDLInterp
-    MLIRPDLDialect
-    MLIRPDLInterpDialect
-    MLIRTosaDialect
-    MLIRQuantDialect
-    MLIRQuantUtils
-    MLIRTensorDialect
-    MLIRTensorUtils
-    MLIRAffineDialect
-    MLIRAffineUtils
-    MLIRMemRefDialect
-    MLIRLLVMIRTransforms
-    MLIRCallInterfaces
-    MLIRMemRefUtils
-    MLIRSparseTensorDialect
-    MLIRComplexDialect
-    MLIRArithDialect
-    MLIRArithUtils
-    MLIRFuncDialect
-    MLIRUBDialect
-    MLIRControlFlowDialect
-    MLIREmitCDialect
-    MLIRDialect
-    MLIRMemorySlotInterfaces
-    MLIRDialectUtils
-    MLIRAnalysis
-    MLIRCastInterfaces
-    MLIRControlFlowInterfaces
-    MLIRDestinationStyleOpInterface
-    MLIRInferIntRangeInterface
-    MLIRInferIntRangeCommon
-    MLIRInferTypeOpInterface
-    MLIRShapedOpInterfaces
-    MLIRSideEffectInterfaces
-    MLIRParallelCombiningOpInterface
-    MLIRViewLikeInterface
-    MLIRParser
-    MLIRAsmParser
-    MLIRPass
-    MLIRBytecodeReader
-    MLIRIR
-    MLIRSupport
-    LLVMSupport
-    LLVMDemangle
-  )
+if(TINYGEN_BUILD_TESTS)
+  add_executable(tinygen-compiler-tests tests/CompilerTest.cpp)
+  target_link_libraries(tinygen-compiler-tests PRIVATE tinyc-mlir)
+  add_test(NAME tinygen-compiler COMMAND tinygen-compiler-tests)
+endif()

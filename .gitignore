@@ -41,3 +41,14 @@
 *.dwo
 
 .DS_Store
+
+# Python packaging and local build outputs
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+gen/
+model_output.mlir
+model_ops_list.txt

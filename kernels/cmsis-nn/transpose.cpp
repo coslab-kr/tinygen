@@ -1,3 +1,4 @@
+#include <iostream>
 #include "kernels.h"
 #include "cmsis-nn.h"
 #ifdef TRANSPOSE

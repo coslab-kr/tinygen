@@ -1,12 +1,6 @@
 #include "MemoryPlanner/TensorGraph.h"
 
-// constructor
-TensorGraph::TensorGraph() {
-}
-
-// destructor
-TensorGraph::~TensorGraph() {
-    for (auto node : nodes) {
-        delete node;
-    }
+TensorNode *TensorGraph::addNode(mlir::Operation *operation) {
+  nodes.push_back(std::make_unique<TensorNode>(operation));
+  return nodes.back().get();
 }

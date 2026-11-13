@@ -2,69 +2,34 @@
 #define MEMORY_PLANNER_H
 
 #include "LivenessAnalysis.h"
-#include "TensorGraph.h"
-#include "TensorNode.h"
-#include "mlir/IR/Value.h"
+#include "mlir/Support/LogicalResult.h"
 #include <cstddef>
+#include <vector>
 
 struct AllocationInfo {
-  mlir::Value *value;
-  TensorNode *defNode;
-  TensorNode *lastUseNode;
-  size_t size;
-  int allocatedPoolIndex;
-  int offset;
-  bool isModelInput;
-  bool isModelOutput;
+  mlir::Value value;
+  TensorNode *defNode = nullptr;
+  TensorNode *lastUseNode = nullptr;
+  size_t size = 0; // bytes, not tensor elements
+  size_t offset = 0;
+  bool isModelInput = false;
+  bool isModelOutput = false;
 };
-
 
 class MemoryPlanner {
-private:
-    TensorGraph *graph;
-    LivenessAnalysis *liveness;
-
-    // Memory allocation plan
-    std::vector<AllocationInfo> allocations;
-
-    struct MemoryPool {
-        size_t size;
-        std::string name;
-        std::vector<std::pair<int, int>> freeIntervals; // (start, end) offsets
-    };
-    std::vector<MemoryPool> memoryPools;
-
-    size_t totalMemory;
-    size_t peakMemory;
-    std::vector<size_t> memoryUsageTimeline;
-    
-    size_t estimateTensorSize(mlir::Value *tensor);
-    int getNodeIndex(TensorNode *node);
-    int findMemoryPool(AllocationInfo &alloc);
-    void insertIntoMemoryPool(int poolIndex, AllocationInfo &alloc);
-    void buildMemoryUsageTimeline();
-
-    int createNewMemoryPool(size_t initialSize);
-    void compactMemoryPools();
- 
 public:
-    MemoryPlanner(TensorGraph *graph, LivenessAnalysis *liveness);
-    ~MemoryPlanner();
+  static constexpr size_t Alignment = 8;
+  MemoryPlanner(TensorGraph *graph, LivenessAnalysis *liveness);
+  mlir::LogicalResult computeTensorSizes();
+  mlir::LogicalResult performMemoryOptimizer();
+  size_t getTotalMemoryUsage() const { return totalMemory; }
+  size_t getPeakMemoryUsage() const { return peakMemory; }
+  const AllocationInfo *getAllocationInfo(mlir::Value value) const;
 
-    // memory planning
-    void computeTensorSizes();
-    void buildAllocationPlan();
-    void performMemoryOptimizer();
-    void generateAllocationCode(const std::string &filename);
-
-    // analysis and visualization results. 
-    void printMemoryStatistics();
-    void visualizeMemoryUsage(const std::string &filename);
-    size_t getTotalMemoryUsage() const;
-    size_t getPeakMemoryUsage() const;
-
-    const AllocationInfo *getAllocationInfo(mlir::Value value) const;
+private:
+  LivenessAnalysis *liveness;
+  std::vector<AllocationInfo> allocations;
+  size_t totalMemory = 0;
+  size_t peakMemory = 0;
 };
-
-
-#endif // MEMORY_PLANNER_H
+#endif

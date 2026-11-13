@@ -1,0 +1,20 @@
+[build-system]
+requires = ["scikit-build-core>=0.10,<2"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "tinygen"
+version = "0.1.0"
+description = "Generate standalone C/C++ inference code from TOSA MLIR"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+tinygen = "tinygen.cli:main"
+
+[tool.scikit-build]
+cmake.version = ">=3.22"
+wheel.packages = ["src/tinygen"]
+wheel.py-api = "py3"
+sdist.include = ["third_party/CMSIS-NN/Include/**", "third_party/CMSIS-NN/Source/**", "third_party/CMSIS-NN/LICENSE"]
+sdist.exclude = ["build/**", "dist/**", ".venv/**"]
